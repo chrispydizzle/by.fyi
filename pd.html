@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Privacy & Data Deletion</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --bg: #050608;
+      --bg-alt: #090b10;
+      --accent: #5af78e;
+      --accent-soft: rgba(90, 247, 142, 0.1);
+      --accent-2: #57c7ff;
+      --danger: #ff6e67;
+      --text: #e6e6e6;
+      --muted: #888;
+      --border: #222;
+      --radius: 10px;
+      --font-mono: "Fira Code", "JetBrains Mono", Menlo, Monaco, Consolas, "Courier New", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: radial-gradient(circle at top, #151b26 0, #050608 55%);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      display: flex;
+      align-items: stretch;
+      justify-content: center;
+      padding: 32px 12px;
+    }
+
+    .wrap {
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .terminal-frame {
+      background: var(--bg-alt);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      overflow: hidden;
+    }
+
+    .terminal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      background: linear-gradient(to right, #11141c, #0b0d13);
+      border-bottom: 1px solid #1b1d25;
+    }
+
+    .traffic-lights {
+      display: flex;
+      gap: 6px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .dot.red {
+      background: #ff5f56;
+    }
+
+    .dot.yellow {
+      background: #ffbd2e;
+    }
+
+    .dot.green {
+      background: #27c93f;
+    }
+
+    .terminal-title {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .terminal-body {
+      display: grid;
+      grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
+      border-top: 1px solid #050608;
+    }
+
+    @media (max-width: 860px) {
+      .terminal-body {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sidebar {
+      border-right: 1px solid #111318;
+      background: radial-gradient(circle at top left, rgba(90, 247, 142, 0.06), transparent 55%);
+      padding: 18px 16px 18px;
+    }
+
+    .main {
+      padding: 20px 22px 28px;
+    }
+
+    .prompt-line {
+      font-size: 13px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .prompt-line span.user {
+      color: var(--accent);
+    }
+
+    .prompt-line span.path {
+      color: var(--accent-2);
+    }
+
+    .hero {
+      margin: 10px 0 22px;
+    }
+
+    .hero-title {
+      font-size: 24px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+      line-height: 1.4;
+    }
+
+    .log-window {
+      margin-top: 18px;
+      padding: 10px 12px;
+      background: rgba(0, 0, 0, 0.5);
+      border-radius: var(--radius);
+      border: 1px solid #151821;
+      font-size: 12px;
+      min-height: 210px;
+      position: relative;
+    }
+
+    .log-line {
+      white-space: pre-wrap;
+      font-family: var(--font-mono);
+      margin-bottom: 2px;
+    }
+
+    .log-line.terminal {
+        padding-top: 1em;
+    }
+
+    .log-line.ok {
+      color: var(--accent);
+    }
+
+    .log-line.warn {
+      color: #ffbd2e;
+    }
+
+    .log-line.err {
+      color: var(--danger);
+    }
+
+    .log-line.dim {
+      color: var(--muted);
+    }
+
+    .cursor {
+      display: inline-block;
+      width: 7px;
+      background: var(--accent);
+      margin-left: 2px;
+      animation: blink 1s steps(1) infinite;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid #1e232e;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    .tag-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(90, 247, 142, 0.9);
+    }
+
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid #151821;
+      padding-bottom: 4px;
+    }
+
+    .tab {
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      border: 1px solid transparent;
+      border-bottom: none;
+      color: var(--muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab.active {
+      color: var(--accent);
+      border-color: #232736;
+      background: radial-gradient(circle at top left, rgba(90, 247, 142, 0.07), rgba(0, 0, 0, 0.8));
+    }
+
+    .tab span.bullet {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px rgba(90, 247, 142, 0.7);
+    }
+
+    .tab.inactive span.bullet {
+      background: #555;
+      box-shadow: none;
+    }
+
+    .content-section {
+      display: none;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .content-section.active {
+      display: block;
+    }
+
+    h1, h2, h3, h4 {
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    h1 {
+      font-size: 16px;
+      color: var(--accent-2);
+    }
+
+    h2 {
+      font-size: 13px;
+      margin-top: 16px;
+      color: var(--accent);
+    }
+
+    p {
+      margin-bottom: 8px;
+      color: var(--text);
+    }
+
+    .muted {
+      color: var(--muted);
+    }
+
+    .pill-tldr {
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      background: var(--accent-soft);
+      border: 1px dashed rgba(90, 247, 142, 0.4);
+      font-size: 12px;
+      margin-bottom: 14px;
+    }
+
+    ul {
+      margin-left: 16px;
+      margin-bottom: 8px;
+    }
+
+    li {
+      margin-bottom: 4px;
+    }
+
+    .kvd {
+      display: inline-block;
+      padding: 1px 4px;
+      border-radius: 4px;
+      background: #050608;
+      border: 1px solid #252938;
+      font-size: 11px;
+      color: var(--accent-2);
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 11px;
+      color: var(--muted);
+      border-top: 1px solid #141826;
+      padding-top: 10px;
+    }
+
+    a {
+      color: var(--accent-2);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .chip {
+      font-size: 10px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid #252938;
+      color: var(--muted);
+      background: rgba(0, 0, 0, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="terminal-frame">
+      <div class="terminal-header">
+        <div class="traffic-lights">
+          <div class="dot red"></div>
+          <div class="dot yellow"></div>
+          <div class="dot green"></div>
+        </div>
+        <div class="terminal-title">this app / privacy &amp; data deletion</div>
+      </div>
+
+      <div class="terminal-body">
+        <!-- LEFT: fake console + quick info -->
+        <aside class="sidebar">
+          <div class="prompt-line">
+            <span class="user" style="text-align:right">root@b4fyi</span>:<span class="path">~/fb-app</span>$ cat privacy.log
+          </div>
+
+          <div class="hero">
+            <div class="hero-title">Zero-Storage Mode</div>
+            <div class="hero-sub">  
+              All access is live-in-memory. No databases. No tracking. No resale.
+            </div>
+            <div class="tag">
+              <span class="tag-dot"></span>
+              REAL-TIME ONLY · NO PERSISTENCE
+            </div>
+          </div>
+
+          <div class="log-window" id="logWindow">
+            <div class="log-line dim">[boot] initializing this app...</div>
+            <div class="log-line ok">[ok] connected to Facebook APIs</div>
+            <div class="log-line ok">[ok] permissions: minimal</div>
+            <div class="log-line warn">[warn] storage backend: disabled by design</div>
+            <div class="log-line ok">[ok] all data kept in volatile memory</div>
+            <div class="log-line ok">[ok] session end =&gt; automatic data discard</div>
+            <div class="log-line err">[err] long-term logging: not available</div>
+            <div class="log-line dim">[info] user control: built in</div>
+            <div class="log-line dim">[info] view full policies on the right</div>
+            <div class="log-line terminal">root@b4fyi:~/fb-app$ <span class="cursor"> </span>
+            </div>
+          </div>
+
+          <div class="chip-row">
+            <div class="chip">local only</div>
+            <div class="chip">no storage</div>
+            <div class="chip">facebook login</div>
+          </div>
+
+        </aside>
+
+        <!-- RIGHT: actual legal content -->
+        <main class="main">
+          <div class="tab-bar">
+            <div class="tab active" data-target="privacy">
+              <span class="bullet"></span> Privacy Policy
+            </div>
+            <div class="tab inactive" data-target="deletion">
+              <span class="bullet"></span> Data Deletion
+            </div>
+            <div class="tab inactive" data-target="meta">
+              <span class="bullet"></span> TL;DR
+            </div>
+          </div>
+
+          <!-- TL;DR -->
+          <section class="content-section" id="meta">
+            <h1>TL;DR Overview</h1>
+            <div class="pill-tldr">
+              <strong>Short version:</strong> this app only uses your Facebook info while the app is open.  
+              Nothing is stored, logged, sold, or shared.
+            </div>
+            <h2>Key Points</h2>
+            <ul>
+              <li>this app may read basic Facebook profile data when you grant permission.</li>
+              <li>All data is used only in real time to display features.</li>
+              <li>There is no database or long-term storage.</li>
+              <li>When the session ends, the data disappears from our side.</li>
+              <li>You can still email us to ask questions or request confirmation.</li>
+            </ul>
+          </section>
+
+          <!-- PRIVACY POLICY -->
+          <section class="content-section active" id="privacy">
+            <h1>Privacy Policy</h1>
+
+            <h2>1. Introduction</h2>
+            <p>
+              This Privacy Policy describes how this app (“the app”, “we”, “our”, “us”)
+              handles information when you use our Facebook-integrated application. 
+            </p>
+            <p>
+              We do <strong>not</strong> store, sell, or share any Facebook user data.
+            </p>
+
+            <h2>2. Information We Access</h2>
+            <p>
+              Depending on the permissions you grant through Facebook Login, the app may temporarily access:
+            </p>
+            <ul>
+              <li>Basic public profile information (e.g., name, profile picture).</li>
+              <li>Email address <span class="muted">(if requested and granted by you).</span></li>
+            </ul>
+            <p>
+              We do not intentionally request or use data that is unnecessary.
+            </p>
+
+            <h2>3. How We Use the Information</h2>
+            <p>Any information retrieved from Facebook is used only to:</p>
+            <ul>
+              <li>Display your data inside the app interface in real time.</li>
+            </ul>
+            <p>
+              We do <strong>not</strong> use this information for analytics, profiling, advertising,
+              or any other secondary purpose.
+            </p>
+
+            <h2>4. Data Storage</h2>
+            <p>
+              <strong>We do not store user data.</strong> Specifically:
+            </p>
+            <ul>
+              <li>No databases, logs, or long-term storage are used.</li>
+              <li>No data is written to disk on our side.</li>
+              <li>No backups of Facebook user data are created.</li>
+            </ul>
+            <p>
+              All Facebook data accessed by the app exists only in memory during the active session and
+              is discarded when the session ends.
+            </p>
+
+            <h2>5. Data Sharing</h2>
+            <p>
+              We do not share your Facebook information with:
+            </p>
+            <ul>
+              <li>Third-party companies.</li>
+              <li>Advertisers or ad networks.</li>
+              <li>Analytics providers.</li>
+            </ul>
+            <p>
+              No data is transferred or sold to external services.
+            </p>
+
+            <h2>6. Security</h2>
+            <p>
+              Even though we do not store data, we take reasonable steps to protect the temporary
+              information that passes through the app, including:
+            </p>
+            <ul>
+              <li>Using only permissions explicitly granted by you via Facebook Login.</li>
+              <li>Requiring secure connections (HTTPS) for communication where applicable.</li>
+              <li>Keeping the app scope intentionally limited to minimize risk.</li>
+            </ul>
+
+            <h2>7. Children’s Privacy</h2>
+            <p>
+              This app is not targeted at children under 13. We do not
+              knowingly collect or store information from children under 13.
+            </p>
+
+            <h2>8. Your Consent</h2>
+            <p>
+              By using this app and connecting via Facebook, you consent to the temporary access and
+              real-time use of your Facebook information as described in this Privacy Policy.
+            </p>
+
+            <h2>9. Changes to This Policy</h2>
+            <p>
+              We may update this Privacy Policy if the app
+              changes. Any updates will be reflected by adding a  <span class="kvd">Last updated</span> date above.
+            </p>
+
+            <h2>10. Contact</h2>
+            <p>
+              If you have questions about this Privacy Policy or how this app handles data, you can contact:
+            </p>
+            <ul>
+              <li><strong>Email:</strong> privacy@b4.fyi</li>
+            </ul>
+
+            <div class="footer-note">
+              This Privacy Policy is written to intentionally avoid
+              persistent data storage. If the app’s scope is expanded in the future, this document should
+              be reviewed and updated accordingly.
+            </div>
+          </section>
+
+          <!-- DATA DELETION POLICY -->
+          <section class="content-section" id="deletion">
+            <h1>Data Deletion Policy</h1>
+
+            <h2>1. Overview</h2>
+            <p>
+              <strong>this app does not store Facebook user data.</strong> All information accessed
+              through Facebook Login or Facebook APIs is used only temporarily during an active session
+              . Once the session ends, the data is discarded.
+            </p>
+            <p>
+              Because no data is stored, users generally do not need to request deletion. However, this
+              Data Deletion Policy explains how you can contact us and obtain confirmation if desired.
+            </p>
+
+            <h2>2. Data Access Behavior</h2>
+            <p>
+              When you log in with Facebook, the app may briefly access basic account information solely
+              for demonstration purposes. All such data:
+            </p>
+            <ul>
+              <li>Is processed in memory only.</li>
+              <li>Is not written to any database, file system, or backup.</li>
+              <li>Is discarded automatically when the app session ends.</li>
+            </ul>
+
+            <h2>3. How to Request Data Deletion</h2>
+            <p>
+              Even though no persistent data is stored, you may still submit a data deletion request or
+              inquiry. To do so, contact us at:
+            </p>
+            <ul>
+              <li><strong>Email:</strong> privacy@b4.fyi</li>
+            </ul>
+            <p>Please include:</p>
+            <ul>
+              <li>Your full name.</li>
+              <li>The email address associated with your Facebook account.</li>
+              <li>
+                A statement that you are requesting confirmation of data deletion related to
+                <strong>this app</strong>.
+              </li>
+            </ul>
+            <p>
+              Since we do not store data, our response will confirm that no Facebook user data is held
+              by the app and that no further technical deletion steps are required.
+            </p>
+
+            <h2>4. Automatic Deletion</h2>
+            <p>
+              Data deletion is effectively automatic by design:
+            </p>
+            <ul>
+              <li>All accessed data is temporary and exists only during the active session.</li>
+              <li>When the session ends, the data is no longer retained by the app.</li>
+              <li>No long-term logs, caches, or backups of Facebook user data are kept.</li>
+              <li>No third-party service is used to store or process your Facebook data on our behalf.</li>
+            </ul>
+
+            <h2>5. Confirmation and Response</h2>
+            <p>
+              When you contact us with a deletion-related inquiry, we will:
+            </p>
+            <ul>
+              <li>Confirm that this app does not maintain persistent user records.</li>
+              <li>Confirm that any data previously accessed via Facebook is no longer stored.</li>
+              <li>Answer any additional questions you may have about data handling in this app.</li>
+            </ul>
+
+            <h2>6. Contact</h2>
+            <p>
+              For all data deletion questions or concerns, contact:
+            </p>
+            <ul>
+              <li><strong>Email:</strong> privacy@b4.fyi</li>
+            </ul>
+
+            <div class="footer-note">
+              This Data Deletion Policy is structured to satisfy Facebook’s requirements for data
+              deletion endpoints for apps that do not persist user data. If this app is later modified
+              to store data, this policy must be updated before deployment.
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple tab switcher
+    const tabs = document.querySelectorAll(".tab");
+    const sections = document.querySelectorAll(".content-section");
+    const VALID_TABS = ["privacy", "deletion", "meta"];
+
+    function activateTab(target) {
+        if (!VALID_TABS.includes(target)) target = "privacy";
+        tabs.forEach(t => {
+        const tTarget = t.getAttribute("data-target");
+        if (tTarget === target) {
+            t.classList.add("active");
+            t.classList.remove("inactive");
+        } else {
+            t.classList.remove("active");
+            t.classList.add("inactive");
+        }
+        });
+        sections.forEach(sec => {
+        if (sec.id === target) {
+            sec.classList.add("active");
+        } else {
+            sec.classList.remove("active");
+        }
+        });
+    }
+
+    // Determine initial tab from ?tab= or #hash
+    function initialTabFromLocation() {
+        const params = new URLSearchParams(location.search);
+        let t = params.get("tab");
+        if (!t) {
+        const hash = location.hash.replace("#", "");
+        if (hash) t = hash;
+        }
+        // Allow a couple of synonyms if you want (optional)
+        if (t === "data-deletion" || t === "delete") t = "deletion";
+        if (!VALID_TABS.includes(t)) t = "privacy";
+        return t;
+    }
+
+      activateTab(initialTabFromLocation());
+
+    // Update on hash changes (supports anchor-only links)
+    window.addEventListener("hashchange", () => {
+        const hashTab = location.hash.replace("#", "");
+        if (VALID_TABS.includes(hashTab)) {
+        activateTab(hashTab);
+        }
+    });
+
+    // Optional: if a query param was used, ensure hash reflects it (so copying URL preserves state)
+    const paramsUsed = new URLSearchParams(location.search).get("tab");
+    if (paramsUsed) {
+        const normalized = initialTabFromLocation();
+        if (location.hash.replace("#", "") !== normalized) {
+        history.replaceState(null, "", "#" + normalized);
+        }
+    }    
+
+    // Existing click behavior now delegates to activateTab
+    tabs.forEach(tab => {
+        tab.addEventListener("click", () => {
+        const target = tab.getAttribute("data-target");
+        activateTab(target);
+        // keep hash updated for deep-linking
+        history.replaceState(null, "", "#" + target);
+        });
+    });
+
+    // Optional: lightweight "scrolling" log illusion
+    const logWindow = document.getElementById("logWindow");
+    const extraLines = [
+      "[info] privacy policy loaded",
+      "[info] data deletion policy loaded",
+      "[ok] long-term storage: disabled",
+      "[info] user may request confirmation by email",
+      "[ok] compliance mode: ready"
+    ];
+    let idx = 0;
+
+    function appendLogLine() {
+      if (!logWindow || idx >= extraLines.length) return;
+      const beforeCursor = logWindow.querySelector(".log-line:last-child");
+      if (!beforeCursor) return;
+
+      const newLine = document.createElement("div");
+      newLine.className = "log-line dim";
+      newLine.textContent = extraLines[idx++];
+      logWindow.insertBefore(newLine, beforeCursor);
+
+      // keep window height in bounds
+      const lines = logWindow.querySelectorAll(".log-line");
+      if (lines.length > 14) {
+        logWindow.removeChild(lines[0]);
+      }
+    }
+
+    setInterval(appendLogLine, 500);
+  </script>
+</body>
+</html>
